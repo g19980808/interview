@@ -92,7 +92,52 @@ console.log(a.call(2));     //Number
 console.log(a.call(null));  //Null
 ```
 
+#### js的内置对象
 
+##### 1.数据对象
+
+###### Number
+
+```javascript
+var num =new Number()
+var max =Number.MAX_VALUE 
+```
+
+属性
+
+MAX_VALUE：最大数字
+
+MIN_VALUE：最小数字
+
+NEGATIVE_INFINITY：表示-Infinity负无穷
+
+POSITIVE_INFINITY：表示Infinity正无穷
+
+
+
+###### String
+
+###### Boolean
+
+##### 2.组合对象
+
+Array
+
+Math
+
+Date
+
+##### 3.高级对象
+
+Object
+
+Error
+
+Global
+
+Function
+
+RegExp
 
 
 
@@ -974,6 +1019,30 @@ Array.from(new Set(arr.toString().split(',').map((v)=>{return parseInt(v,10)})))
 
 #### 函数
 
+判断是普通函数还是构造函数
+
+```javascript
+//在函数内部判断this是否为当前函数的实例来判断当前函数是否作为构造函数
+
+function Fn(){
+      if(this instanceof Fn){
+         console.log('我是构造函数')
+       }else{
+           console.log('我是普通函数')
+       }
+}
+Fn()       //我是普通函数
+new Fn()   //我是构造函数
+```
+
+
+
+
+
+
+
+
+
 #### 正则
 
 
@@ -1703,9 +1772,81 @@ js怎么实现继承
 
 闭包不在使用时，要及时释放，将引用内层函数对象的变量赋值为null
 
+##### 对内存泄漏的了解
+
+###### 定义
+
+程序中已在堆中分配的内存，因为某种原因未释放或无法释放的问题
+
+###### 生命周期
+
+分配期：js中自动分配所需要的内存
+
+使用期：使用分配的内存(变量的操作)
+
+释放期：程序运行完毕，未能释放的内存会导致内存泄漏
 
 
 
+###### 出现内存泄漏的原因
+
+1.意外全局变量
+
+2.闭包
+
+3.定时器
+
+###### 避免内存泄漏
+
+1.全局变量先声明后使用
+
+2.避免过多使用闭包
+
+3.清除定时器和时间监听
+
+#### 理解进程和线程
+
+进程：cpu分配的最小单位
+
+现程：cpu最小的调度单位
+
+##### js为什么是单线程
+
+js主要实现浏览器与用户的交互以及dom的操作，如果js是多线程，如果一个线程要删除这个dom,另一个线程要修改这个dom,这是浏览器就没法操作了，为了避免复杂的操作，所以js是单线程的
+
+
+
+#### 怎么使对象属性不可修改
+
+##### 1.Object.defineproperty()
+
+```javascript
+var obj={
+    a:1,
+    b:2
+}
+Object.defineProperty('obj',c,{
+    value:888,
+    writable:false,  //为true时可以修改
+    configurable:false //为true是可以使用delete...
+})
+obj.c=999
+console.log(obj.c) //888
+```
+
+##### 2.Object.preventExtensions()
+
+不能新增对象属性，但可以修改
+
+```javascript
+var obj={
+    a:1,
+    b:2
+}
+Object.preventExtensions(obj)
+obj.c=888
+console.log(obj) //{a:1,b:2}
+```
 
 
 
@@ -2551,17 +2692,115 @@ Ajax的工作原理相当于在用户和服务器之间加了一个中间层(Aja
 
 3.meta viewport的作用
 
-4.跨域
+#### 跨域
+
+##### 定义(原因)
+
+因为js同源策略限制，浏览器不能执行其他网站的脚本，同源指的是同协议，同域名，同端口
+
+##### 限制了哪些
+
+1.无法读取非同源网页的Cookie,localStorage,indexedDB
+
+2.无法接触非同源网页的dom
+
+3.无法向非同源地址发送ajax请求，浏览器拒绝响应
+
+##### 跨域解决方案
+
+###### 1.jsonp
+
+原理：利用script标签的src属性可以连接到不同源的js脚本，来达到跨域的目的
+
+JSONP允许用户传递一个callback参数给服务器端，然后服务器端返回数据时会将这个callback参数作为函数名来包裹住JSON数据。这样客户端就可以随意定制自己的函数来自动处理返回的数据了。
+JSONP只能解决get请求，不能解决post请求
+
+```javascript
+var url='http://www.baidu.com/jsonp_data'
+//1.创建script标签
+var script=document.creatElement('script')
+//2.设置src属性
+script.setAttribute('src',url)
+//3.插入到head标签内
+document.getElementsByTagName('head')[0].appendChild(script);
+
+function callback(data){
+    console.log(data) //{name:1}
+}
 
 
 
+//jsonp_data.js文件
+callback({'name':1})
+
+```
+
+###### 2.ajax跨域
+
+浏览器直接去访问其他网站内容会被拒绝，但可以浏览器通过url去请求服务器，服务器通过url去获取其他网站内容然后返回给浏览器
 
 
-什么是跨域
 
-跨域怎么解决
+```javascript
+$ajax({
+    url:'http://localhost:80/?callback=callback',
+    method:'get',
+    dataType:'jsonp',
+    success:(res)=>{
+        console.log(res)
+    }
+})
 
-jsonp实现跨域的原理
+function callback(data){
+    console.log(data)
+}
+```
+
+###### 3.CORS跨域资源共享
+
+服务端设置res.setHeader(Access-Control-Allow-Origin：'*')就可以开启CORS
+
+Access-Control-Allow-Origin//允许跨域的域名
+Access-Control-Allow-Headers//允许的header类型
+Access-Control-Allow-Methods//跨域允许的请求方式
+
+###### 4.webpack
+
+vue.config.js中设置
+
+```javascript
+ devServer: {
+    proxy: {
+      '/api': {
+        target: process.env.VUE_APP_BASE_API,
+        changeOrigin: true,//设置允许跨域
+        pathRewrite: {
+          '^/api': 'api'
+        }
+      }
+    }
+  },
+```
+
+
+
+###### 5.Nginx 反向代理
+
+通过nginx配置一个代理服务器将客户机请求转发给内部网络上的目标服务器；并将服务器上返回的结果返回给客户端
+
+#### 浏览器所用内核
+
+IE:Trident内核
+
+Chrome:以前是kebkit,现在是Blink
+
+Firefox:Gecko内核
+
+Safari:webkit内核
+
+Opera:presto->webkit->Blink
+
+
 
 5.浏览器的渲染机制
 
